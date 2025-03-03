@@ -20,6 +20,12 @@
 # production
 /build
 
+#wallet
+/wallet
+
+#venv
+/venv
+
 # misc
 .DS_Store
 *.pem
