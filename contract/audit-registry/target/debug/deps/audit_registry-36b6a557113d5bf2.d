@@ -5,3 +5,6 @@
 /home/spydiecy/projects/AuditFi_MultiversX/contract/audit-registry/target/debug/deps/audit_registry-36b6a557113d5bf2.d: src/audit_registry.rs
 
 src/audit_registry.rs:
+
+# env-dep:CARGO_PKG_NAME=audit-registry
+# env-dep:CARGO_PKG_VERSION=0.0.0

@@ -1,0 +1,1 @@
+/home/spydiecy/projects/AuditFi_MultiversX/contract/audit-registry/target/debug/audit-registry-meta: /home/spydiecy/projects/AuditFi_MultiversX/contract/audit-registry/meta/src/main.rs /home/spydiecy/projects/AuditFi_MultiversX/contract/audit-registry/src/audit_registry.rs

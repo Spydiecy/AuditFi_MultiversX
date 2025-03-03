@@ -1,0 +1,1 @@
+/home/spydiecy/projects/AuditFi_MultiversX/contract/audit-registry/target/wasm32-unknown-unknown/release/audit_registry_wasm.wasm: /home/spydiecy/projects/AuditFi_MultiversX/contract/audit-registry/src/audit_registry.rs /home/spydiecy/projects/AuditFi_MultiversX/contract/audit-registry/wasm/src/lib.rs
