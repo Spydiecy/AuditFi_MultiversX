@@ -1,1 +1,0 @@
-&ManagedRef<'_, <Self as multiversx_sc::contract_base::ContractBase>::Api, multiversx_sc::types::ManagedByteArray<<Self as multiversx_sc::contract_base::ContractBase>::Api, 32>>

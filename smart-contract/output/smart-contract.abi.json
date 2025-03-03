@@ -1,0 +1,189 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.84.1",
+            "commitHash": "e71f9a9a98b0faf423844bf0ba7438f29dc27d58",
+            "commitDate": "2025-01-27",
+            "channel": "Stable",
+            "short": "rustc 1.84.1 (e71f9a9a9 2025-01-27)"
+        },
+        "contractCrate": {
+            "name": "smart-contract",
+            "version": "0.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.56.1"
+        }
+    },
+    "name": "AuditRegistry",
+    "constructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "register_audit",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "contract_hash",
+                    "type": "array32<u8>"
+                },
+                {
+                    "name": "stars",
+                    "type": "u8"
+                },
+                {
+                    "name": "summary",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "get_all_audits",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "start_index",
+                    "type": "u32"
+                },
+                {
+                    "name": "limit",
+                    "type": "u32"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<multi<array32<u8>,u8,bytes,Address,u64>>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getTotalContracts",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getContractAudits",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "contract_hash",
+                    "type": "array32<u8>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<Audit>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getAuditorHistory",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "auditor",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<array32<u8>>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getLatestAudit",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "contract_hash",
+                    "type": "array32<u8>"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Audit"
+                }
+            ]
+        },
+        {
+            "name": "withdraw",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "getOwner",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "Address"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "identifier": "auditRegistered",
+            "inputs": [
+                {
+                    "name": "contract_hash",
+                    "type": "array32<u8>",
+                    "indexed": true
+                },
+                {
+                    "name": "stars",
+                    "type": "u8",
+                    "indexed": true
+                },
+                {
+                    "name": "auditor",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "summary",
+                    "type": "bytes"
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "Audit": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "stars",
+                    "type": "u8"
+                },
+                {
+                    "name": "summary",
+                    "type": "bytes"
+                },
+                {
+                    "name": "auditor",
+                    "type": "Address"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "u64"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,25 @@
+[package]
+name = "smart-contract"
+version = "0.0.0"
+publish = false
+edition = "2021"
+authors = ["you"]
+
+[lib]
+path = "src/smart_contract.rs"
+
+[dependencies.multiversx-sc]
+version = "0.56.1"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.56.1"
+
+[workspace]
+members = [
+    ".",
+    "meta",
+    "interactor"
+]
