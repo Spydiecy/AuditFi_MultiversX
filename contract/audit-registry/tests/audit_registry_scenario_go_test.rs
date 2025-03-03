@@ -6,5 +6,5 @@ fn world() -> ScenarioWorld {
 
 #[test]
 fn empty_go() {
-    world().run("scenarios/contract.scen.json");
+    world().run("scenarios/audit_registry.scen.json");
 }

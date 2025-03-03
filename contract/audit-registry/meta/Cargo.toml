@@ -1,10 +1,10 @@
 [package]
-name = "contract-meta"
+name = "audit-registry-meta"
 version = "0.0.0"
 edition = "2021"
 publish = false
 
-[dependencies.contract]
+[dependencies.audit-registry]
 path = ".."
 
 [dependencies.multiversx-sc-meta-lib]

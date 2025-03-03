@@ -4,11 +4,11 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     // blockchain.set_current_dir_from_workspace("relative path to your workspace, if applicable");
-    blockchain.register_contract("mxsc:output/contract.mxsc.json", contract::ContractBuilder);
+    blockchain.register_contract("mxsc:output/audit-registry.mxsc.json", audit_registry::ContractBuilder);
     blockchain
 }
 
 #[test]
 fn empty_rs() {
-    world().run("scenarios/contract.scen.json");
+    world().run("scenarios/audit_registry.scen.json");
 }

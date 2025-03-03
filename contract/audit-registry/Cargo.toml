@@ -1,12 +1,12 @@
 [package]
-name = "contract"
+name = "audit-registry"
 version = "0.0.0"
 publish = false
 edition = "2021"
 authors = ["you"]
 
 [lib]
-path = "src/contract.rs"
+path = "src/audit_registry.rs"
 
 [dependencies.multiversx-sc]
 version = "0.56.1"
