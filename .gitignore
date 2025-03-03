@@ -27,6 +27,7 @@
 /venv
 
 #contract extra stuff
+/smart-contract/target/
 /smart-contract/target/debug/deps/rust_interact-ba99f553d43e425e
 
 # misc
@@ -48,3 +49,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+smart-contract/target/
+*.rlib
+*.o
+*.d
