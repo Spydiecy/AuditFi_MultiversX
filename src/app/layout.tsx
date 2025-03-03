@@ -5,9 +5,16 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { connectWallet, switchNetwork, CHAIN_CONFIG, ChainKey } from '@/utils/web3';
 import { SignOut, List, X, CaretDown, CaretUp } from 'phosphor-react';
 import Logo from '/public/logo.svg';
+import { 
+  getAddressFromUrl, 
+  getWalletProvider, 
+  connectWallet, 
+  disconnectWallet, 
+  CHAIN_CONFIG, 
+  ChainKey 
+} from '@/utils/web3';
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -16,113 +23,54 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
-  const [currentChain, setCurrentChain] = useState<ChainKey>('lineaSepolia');
+  const [currentChain, setCurrentChain] = useState<ChainKey>('devnet');
   const [isChainMenuOpen, setIsChainMenuOpen] = useState(false);
   const [isNetworkSwitching, setIsNetworkSwitching] = useState(false);
   
-  // Check current network on mount and listen for account changes
+  // Check for address in URL (after wallet redirect)
   useEffect(() => {
-    const checkNetwork = async () => {
-      if (window.ethereum) {
-        try {
-          const chainId = await window.ethereum.request({ 
-            method: 'eth_chainId' 
-          }) as string;
-          
-          const network = Object.entries(CHAIN_CONFIG).find(
-            ([, config]) => config.chainId.toLowerCase() === chainId.toLowerCase()
-          );
-          
-          if (network) {
-            setCurrentChain(network[0] as ChainKey);
-          }
-          
-          // Check if already connected
-          const accounts = await window.ethereum.request({ 
-            method: 'eth_accounts' 
-          }) as string[];
-          
-          if (accounts && accounts[0]) {
-            setAddress(accounts[0]);
-          }
-        } catch (error) {
-          console.error('Error checking network:', error);
-        }
-      }
-    };
-    
-    checkNetwork();
-
-    // Listen for account changes
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length === 0) {
-          setAddress(null);
-        } else {
-          setAddress(accounts[0]);
-        }
-      };
-
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      return () => {
-        window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
-      };
+    const urlAddress = getAddressFromUrl();
+    if (urlAddress) {
+      setAddress(urlAddress);
+      
+      // Remove the address from the URL (clean up)
+      const url = new URL(window.location.href);
+      url.searchParams.delete('address');
+      window.history.replaceState({}, '', url.toString());
     }
-  }, []);
-
-  // Listen for network changes
-  useEffect(() => {
-    if (window.ethereum) {
-      const handleChainChanged = (chainId: string) => {
-        const network = Object.entries(CHAIN_CONFIG).find(
-          ([, config]) => config.chainId.toLowerCase() === chainId.toLowerCase()
-        );
-        if (network) {
-          setCurrentChain(network[0] as ChainKey);
-        }
-        setIsNetworkSwitching(false);
-      };
-
-      window.ethereum.on('chainChanged', handleChainChanged);
-      return () => {
-        window.ethereum?.removeListener('chainChanged', handleChainChanged);
-      };
-    }
-  }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('#chain-switcher')) {
-        setIsChainMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleConnect = async () => {
     try {
-      const { address: walletAddress } = await connectWallet();
-      setAddress(walletAddress);
+      await connectWallet(currentChain);
     } catch (error) {
       console.error('Failed to connect wallet:', error);
     }
   };
 
-  const handleDisconnect = () => {
-    setAddress(null);
+  const handleDisconnect = async () => {
+    try {
+      await disconnectWallet(currentChain);
+      setAddress(null);
+    } catch (error) {
+      console.error('Failed to disconnect:', error);
+      // Even if disconnect fails in the wallet, we can still clear the local state
+      setAddress(null);
+    }
   };
 
   const handleChainSwitch = async (chainKey: ChainKey) => {
     if (isNetworkSwitching) return;
     try {
       setIsNetworkSwitching(true);
-      await switchNetwork(chainKey);
       setCurrentChain(chainKey);
       setIsChainMenuOpen(false);
+      
+      // If already connected, disconnect from current network and reconnect to new one
+      if (address) {
+        await disconnectWallet(currentChain);
+        await connectWallet(chainKey);
+      }
     } catch (error) {
       console.error('Failed to switch chain:', error);
     } finally {
@@ -214,7 +162,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                       />
                     )}
                     <span className="text-sm font-medium">
-                      {isNetworkSwitching ? 'Switching...' : (CHAIN_CONFIG[currentChain]?.chainName || 'Select Network')}
+                      {isNetworkSwitching ? 'Switching...' : CHAIN_CONFIG[currentChain].chainName}
                     </span>
                     {isChainMenuOpen ? (
                       <CaretUp className="w-4 h-4" />
