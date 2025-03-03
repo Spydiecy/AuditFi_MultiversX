@@ -53,3 +53,8 @@ smart-contract/target/
 *.rlib
 *.o
 *.d
+smart-contract/target/
+*.rlib
+*.wasm
+*.o
+*.d
