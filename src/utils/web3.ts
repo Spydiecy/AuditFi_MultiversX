@@ -1,131 +1,124 @@
-import { ethers } from 'ethers';
+import { WalletProvider, WALLET_PROVIDER_DEVNET } from "@multiversx/sdk-web-wallet-provider";
+import { TransactionWatcher } from "@multiversx/sdk-core";
+import { ApiNetworkProvider } from "@multiversx/sdk-network-providers";
 
-// Define event types for better type safety
-type EthereumEvent = 
-  | { type: 'accountsChanged'; value: string[] }
-  | { type: 'chainChanged'; value: string }
-  | { type: 'connect'; value: { chainId: string } }
-  | { type: 'disconnect'; value: { code: number; message: string } };
-
-// Define event listener type
-type EthereumEventListener<T extends EthereumEvent['type']> = (
-  ...args: Extract<EthereumEvent, { type: T }>['value'] extends never
-    ? []
-    : [Extract<EthereumEvent, { type: T }>['value']]
-) => void;
-
-// Define interfaces for better type safety
-interface EthereumProvider extends ethers.Eip1193Provider {
-  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-  on<T extends EthereumEvent['type']>(event: T, listener: EthereumEventListener<T>): void;
-  removeListener<T extends EthereumEvent['type']>(event: T, listener: EthereumEventListener<T>): void;
-}
-
-interface NativeCurrency {
-  name: string;
-  symbol: string;
-  decimals: number;
-}
-
-interface ChainConfig {
-  chainId: string;
-  chainName: string;
-  nativeCurrency: NativeCurrency;
-  rpcUrls: string[];
-  blockExplorerUrls: string[];
-  iconPath: string;
-}
-
-// Extend Window interface properly
-declare global {
-  interface Window {
-    ethereum?: EthereumProvider;
+// Define MultiversX network configurations
+export const CHAIN_CONFIG = {
+  devnet: {
+    chainId: 'D',
+    chainName: 'MultiversX Devnet',
+    nativeCurrency: { name: 'eGLD', symbol: 'eGLD', decimals: 18 },
+    rpcUrls: ['https://devnet-gateway.multiversx.com'],
+    blockExplorerUrls: ['https://devnet-explorer.multiversx.com'],
+    apiUrl: 'https://devnet-api.multiversx.com',
+    walletAddress: WALLET_PROVIDER_DEVNET,
+    iconPath: '/chains/multiversx.png'
+  },
+  testnet: {
+    chainId: 'T',
+    chainName: 'MultiversX Testnet',
+    nativeCurrency: { name: 'eGLD', symbol: 'eGLD', decimals: 18 },
+    rpcUrls: ['https://testnet-gateway.multiversx.com'],
+    blockExplorerUrls: ['https://testnet-explorer.multiversx.com'],
+    apiUrl: 'https://testnet-api.multiversx.com',
+    walletAddress: 'https://testnet-wallet.multiversx.com',
+    iconPath: '/chains/multiversx.png'
+  },
+  mainnet: {
+    chainId: '1',
+    chainName: 'MultiversX Mainnet',
+    nativeCurrency: { name: 'eGLD', symbol: 'eGLD', decimals: 18 },
+    rpcUrls: ['https://gateway.multiversx.com'],
+    blockExplorerUrls: ['https://explorer.multiversx.com'],
+    apiUrl: 'https://api.multiversx.com',
+    walletAddress: 'https://wallet.multiversx.com',
+    iconPath: '/chains/multiversx.png'
   }
-}
-
-export const CHAIN_CONFIG: Record<string, ChainConfig> = {
-  creatorChainTestnet: {
-    chainId: '0x10469', // 66665 in hex
-    chainName: 'Creator Chain Testnet',
-    nativeCurrency: {
-      name: 'CETH',
-      symbol: 'CETH',
-      decimals: 18
-    },
-    rpcUrls: ['https://66665.rpc.thirdweb.com'],
-    blockExplorerUrls: ['https://explorer.creatorchain.io'],
-    iconPath: '/chains/creator.png'
-  }
-} as const;
+};
 
 export type ChainKey = keyof typeof CHAIN_CONFIG;
-interface WalletConnection {
-  provider: ethers.BrowserProvider;
-  signer: ethers.JsonRpcSigner;
-  address: string;
-}
 
-interface EthereumError extends Error {
-  code: number;
-}
+// MultiversX wallet provider singleton
+let walletProvider: WalletProvider | null = null;
 
-export const connectWallet = async (): Promise<WalletConnection> => {
-  if (!window.ethereum) {
-    throw new Error('Please install MetaMask');
+// Initialize wallet provider
+export const getWalletProvider = (chainKey: ChainKey = 'devnet'): WalletProvider => {
+  if (!walletProvider) {
+    walletProvider = new WalletProvider(CHAIN_CONFIG[chainKey].walletAddress);
   }
-
-  try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    await provider.send('eth_requestAccounts', []);
-    const signer = await provider.getSigner();
-    const address = await signer.getAddress();
-    return { provider, signer, address };
-  } catch (error) {
-    console.error('Error connecting wallet:', error);
-    throw error;
-  }
+  return walletProvider;
 };
 
-export const switchNetwork = async (chainKey: ChainKey): Promise<void> => {
-  if (!window.ethereum) {
-    throw new Error('Please install MetaMask');
-  }
+// Get network provider for querying the blockchain
+export const getNetworkProvider = (chainKey: ChainKey = 'devnet') => {
+  return new ApiNetworkProvider(CHAIN_CONFIG[chainKey].apiUrl);
+};
 
-  const chain = CHAIN_CONFIG[chainKey];
+// Connect to MultiversX wallet
+export const connectWallet = async (chainKey: ChainKey = 'devnet') => {
+  const provider = getWalletProvider(chainKey);
   
-  try {
-    await window.ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: chain.chainId }],
-    });
-  } catch (error) {
-    const switchError = error as EthereumError;
-    // This error code means the chain has not been added to MetaMask
-    if (switchError.code === 4902) {
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: chain.chainId,
-            chainName: chain.chainName,
-            nativeCurrency: chain.nativeCurrency,
-            rpcUrls: chain.rpcUrls,
-            blockExplorerUrls: chain.blockExplorerUrls
-          }],
-        });
-      } catch (addError) {
-        console.error('Error adding chain:', addError);
-        throw addError;
-      }
-    } else {
-      console.error('Error switching chain:', switchError);
-      throw switchError;
-    }
-  }
+  // Build the callback URL (current URL without query parameters)
+  const callbackUrl = encodeURIComponent(window.location.href.split('?')[0]);
+  
+  // Redirect to the wallet login page
+  await provider.login({
+    callbackUrl: callbackUrl,
+  });
+  
+  // The actual connection happens when the wallet redirects back with address info
+  return { 
+    success: true,
+    message: 'Redirecting to MultiversX Wallet...'
+  };
 };
 
-export const isSupportedNetwork = (chainId: string): boolean => {
-  return Object.values(CHAIN_CONFIG).some(
-    chain => chain.chainId.toLowerCase() === chainId.toLowerCase()
-  );
+// Get address from URL after wallet redirect
+export const getAddressFromUrl = (): string | null => {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('address');
+};
+
+// Sign and send a transaction
+export const signTransaction = async (transaction: any, chainKey: ChainKey = 'devnet') => {
+  const provider = getWalletProvider(chainKey);
+  const callbackUrl = encodeURIComponent(window.location.href.split('?')[0]);
+  
+  // Redirect to the wallet for signing
+  await provider.signTransaction(transaction, {
+    callbackUrl: callbackUrl
+  });
+  
+  return {
+    success: true,
+    message: 'Redirecting to MultiversX Wallet for signing...'
+  };
+};
+
+// Get a signed transaction from URL after wallet redirect
+export const getSignedTransactionFromUrl = () => {
+  const provider = getWalletProvider();
+  return provider.getTransactionsFromWalletUrl();
+};
+
+// Disconnect wallet
+export const disconnectWallet = async (chainKey: ChainKey = 'devnet') => {
+  const provider = getWalletProvider(chainKey);
+  const callbackUrl = encodeURIComponent(window.location.href.split('?')[0]);
+  
+  await provider.logout({
+    callbackUrl: callbackUrl
+  });
+  
+  return {
+    success: true,
+    message: 'Logged out successfully'
+  };
+};
+
+// Check if transaction is completed
+export const waitForTransaction = async (txHash: string, chainKey: ChainKey = 'devnet') => {
+  const networkProvider = getNetworkProvider(chainKey);
+  const watcher = new TransactionWatcher(networkProvider);
+  return await watcher.awaitCompleted(txHash);
 };
