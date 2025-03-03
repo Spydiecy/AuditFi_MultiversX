@@ -3,7 +3,7 @@ name = "audit-registry"
 version = "0.0.0"
 publish = false
 edition = "2021"
-authors = ["you"]
+authors = ["tanishq"]
 
 [lib]
 path = "src/audit_registry.rs"
