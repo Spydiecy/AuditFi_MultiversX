@@ -26,6 +26,9 @@
 #venv
 /venv
 
+#contract extra stuff
+/smart-contract/target
+
 # misc
 .DS_Store
 *.pem
